@@ -1,73 +1,84 @@
 require 'csv'
 require 'pry'
 
+class Transaction
+  attr_reader :date, :amount, :description, :account
 
-class Transactions
-  def self.deposit?
-    balances = []
-      CSV.foreach('bank_data.csv', headers: true) do |row|
-        balances << row.to_hash
-      end
-      balances.each do |balance|
-        if balance["Amount"].to_i > 0
-     end
+  def initialize(date, amount, description, account)
+    @date = date
+    @amount = amount
+    @description = description
+    @account = account
+  end
+
+  def deposit?
+    if @amount.to_f > 0
+      return "DEPOSIT"
+    else
+      return "WITHDRAWAL"
     end
   end
 
-  def self.summary
-    balances = []
-    CSV.foreach('bank_data.csv', headers: true) do |row|
-      balances << row.to_hash
-    end
-    transactions = []
-    balances.each do |balance|
-      if self.deposit? != true
-        amount = balance["Amount"].to_i * -1
-        type = 'WITHDRAWAL'
-      else
-        amount = balance["Amount"].to_i
-        type = 'DEPOSIT'
-      end
-      transactions << "#{amount}\t#{type}\t#{balance["Date"]} - #{balance["Description"]}"
-    end
-    transactions
+  def summary
+    "#{amount}\t#{deposit?}\t#{date} - #{description}"
   end
+  #binding.pry
 end
+
+
 
 class Account
-  def initialize
-    @transactions = Transactions.summary
+  attr_reader :name, :starting_balance
+  attr_accessor :transactions
+
+  def initialize(starting_balance, name)
+    @starting_balance = starting_balance
+    @name = name
+    @transactions = []
   end
 
-  def self.starting_balance
-    starting_balance = {}
-    CSV.foreach('balances.csv', headers: true) do |row|
-      starting_balance[row[0]] = row[1].to_i
+  def current_balance
+    @transactions.each do |transaction|
+      @starting_balance += transaction["Amount"].to_f
+      binding.pry
     end
   end
 
-  def self.current_balance
-  end
-
-  def self.summary
-    summaries = []
-    summaries << @transactions
-    binding.pry
+  def summary
   end
 end
 
-Account.summary
+accounts = []
+transactions = []
+CSV.foreach('balances.csv', headers: true) do |row|
+  accounts << Account.new(row['Balance'], row['Account'])
+  #accounts is now an array of Account objects
+  #you can access each method of the Accounts class by accessing an individual object within the array
+end
 
-# puts "==== Purchasing Account ===="
-# puts "Starting Balance: #{Account.starting_balance}"
+CSV.foreach('bank_data.csv', headers: true) do |row|
+  # find the matching account from
+  transactions << Transaction.new(row['Date'], row['Amount'], row['Description'], row['Account'])
+  #transactions is now an array of Transaction objects
+  #you can access each method of the Transactions class by accessing an individual object within the array
+end
+
+binding.pry
+
+accounts.each do |account|
+  puts "==== #{account.name} ===="
+  puts "Starting Balance: #{account.starting_balance}"
+  puts "Ending Balance: #{account.current_balance}"
+  puts "========"
+end
 # puts "Ending Balance: #{Account.current_balance}"
 # puts
-# puts "#{Account.summary}"
+# puts "#{Transactions.summary}"
 # puts "========"
 # puts
 # puts "==== Business Checking ===="
 # puts "Starting Balance: #{Account.starting_balance}"
 # puts "Ending Balance: #{Account.current_balance}"
 # puts
-# puts "#{Account.summary}"
+# puts "#{Transactions.summary}"
 # puts "========"
